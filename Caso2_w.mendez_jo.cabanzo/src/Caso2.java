@@ -139,6 +139,7 @@ public class Caso2 {
                             envejecimiento = envejecimiento | 0b10000000000000000000000000000000;
                             memoriaFisica.put(pag, envejecimiento);
                         } else {
+                            fallos++;
                             int envejecimiento = 0b10000000000000000000000000000000;
                             if (memoriaFisica.size() <= mp) {
                                 memoriaFisica.put(pag, envejecimiento);
@@ -146,7 +147,6 @@ public class Caso2 {
                                 int aReemplazar = buscarReemplazo(memoriaFisica);
                                 memoriaFisica.remove(aReemplazar);
                                 memoriaFisica.put(pag, envejecimiento);
-                                fallos++;
                             }
                         }
                     }
@@ -181,6 +181,7 @@ public class Caso2 {
                             envejecimiento = envejecimiento | 0b10000000000000000000000000000000;
                             memoriaFisica.put(pag, envejecimiento);
                         } else {
+                            fallos++;
                             int envejecimiento = 0b10000000000000000000000000000000;
                             // System.out.println(memoriaFisica.size() + "-" + mp);
                             if (memoriaFisica.size() < mp) {
@@ -190,7 +191,6 @@ public class Caso2 {
                                 System.out.println("Reemplazando pagina " + aReemplazar + " por " + pag);
                                 memoriaFisica.remove(aReemplazar);
                                 memoriaFisica.put(pag, envejecimiento);
-                                fallos++;
                             }
                         }
                     }
