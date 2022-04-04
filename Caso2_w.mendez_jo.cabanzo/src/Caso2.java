@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -34,9 +35,18 @@ public class Caso2 {
                 System.out.println(generarArchivo(tp, te, nf, nc, tr));
             } else if (option.equals("2")) { // Ejecutar opcion 2
                 imprimirLinea();
-                String file = input("Nombre del archivo de la carpeta data: ");
+                String nombre = input("Nombre del archivo en la carpeta data: ");
+                File file = new File("data/" + nombre);
+                if (file.exists()) {
+                    int mp = intput("Numero de marcos de pagina:");
+                    System.out.println("Ejecutando archivo...");
+                    procesarArchivo(file, mp);
+                } else {
+                    System.out.println("El archivo no existe");
+                }
 
             } else if (option.equals("0")) { // Ejecutar opcion 0
+                imprimirLinea();
                 System.out.println("Saliendo...");
                 salir = true;
             } else {
@@ -46,21 +56,15 @@ public class Caso2 {
         }
     }
 
-    private static void imprimirMenu() {
-        System.out.println("1) Generar Archivo");
-        System.out.println("2) Simular ejecucion");
-        System.out.println("0) Salir");
-    }
-
-    public static void imprimirLinea() {
-        System.out.println("-----------------------------------------------------");
+    private static void procesarArchivo(File file, int mp) {
     }
 
     private static String generarArchivo(int tp, int te, int nf, int nc, int tr) {
         String fecha = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy-HH-mm"));
         String salida = "";
+        int intPorPag = tp / te;
         int nr = nf * nc * 3; // Numero de referencias
-        int np = (int) Math.ceil(nr * te / (float) tp); // Numero de paginas = tamanio de 3 matrices / tamanio de pagina
+        int np = nr / intPorPag; // Numero de paginas = tamanio de 3 matrices / tamanio de pagina
 
         try (FileWriter archivo = new FileWriter(".\\data\\" + fecha + ".txt")) {
             try {
@@ -77,15 +81,45 @@ public class Caso2 {
                 // ejecucion
                 archivo.write("NR=" + nr + "\n");
                 // Escritura de las referencias de pagina
-                int inicio1 = 0;
-                int inicio2 = np / 3;
-                int inicio3 = np * 2 / 3;
+
+                String[][] matriz1 = new String[nf][nc];
+                String[][] matriz2 = new String[nf][nc];
+                String[][] matriz3 = new String[nf][nc];
+                String[][][] matrices = { matriz1, matriz2, matriz3 };
+
+                int matrizActual = 0;
+                int filaActual = 0;
+                int columnaActual = 0;
+
+                for (int i = 0; i < np; i++) {
+                    for (int j = 0; j < intPorPag; j++) {
+                        String letra = "";
+                        if (matrizActual == 0) {
+                            letra = "A";
+                        } else if (matrizActual == 1) {
+                            letra = "B";
+                        } else if (matrizActual == 2) {
+                            letra = "C";
+                        }
+                        matrices[matrizActual][filaActual][columnaActual] = letra + ":[" + filaActual + ","
+                                + columnaActual + "]," + i + "," + j * te + "\n";
+                        columnaActual++;
+                        if (columnaActual == nc) {
+                            columnaActual = 0;
+                            filaActual++;
+                            if (filaActual == nf) {
+                                filaActual = 0;
+                                matrizActual++;
+                            }
+                        }
+                    }
+                }
 
                 for (int i = 0; i < nf; i++) {
                     for (int j = 0; j < nc; j++) {
-                        archivo.write("A:[" + i + "-" + j + "]," + (inicio1 + i) + "," + j * te + "\n");
-                        archivo.write("B:[" + i + "-" + j + "]," + (inicio2 + i) + "," + j * te + "\n");
-                        archivo.write("C:[" + i + "-" + j + "]," + (inicio3 + i) + "," + j * te + "\n");
+                        archivo.write(matrices[0][i][j]);
+                        archivo.write(matrices[1][i][j]);
+                        archivo.write(matrices[2][i][j]);
                     }
                 }
 
@@ -110,8 +144,18 @@ public class Caso2 {
     }
 
     public static int intput(String text) {
-        System.out.println(text);
+        System.out.print(text);
         Scanner sc = new Scanner(System.in);
         return sc.nextInt();
+    }
+
+    private static void imprimirMenu() {
+        System.out.println("1) Generar Archivo");
+        System.out.println("2) Simular ejecucion");
+        System.out.println("0) Salir");
+    }
+
+    public static void imprimirLinea() {
+        System.out.println("-----------------------------------------------------");
     }
 }
