@@ -1,18 +1,22 @@
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.Scanner;
+import java.util.Map.Entry;
 
 /*
     Caso 2 InfraComp
-    Autores:
+    Autor:
         w.mendez - William Mendez - 202012662
-        jo.cabanzo - Obed Cabanzo - 201911749
 */
 
 public class Caso2 {
+
+    private static HashMap<Integer, Integer> memoriaFisica;
+
     public static void main(String[] args) throws Exception {
         imprimirLinea();
         System.out.println("Bienvenido al simulador del algoritmo de envejecimiento");
@@ -57,16 +61,184 @@ public class Caso2 {
     }
 
     private static void procesarArchivo(File file, int mp) {
+        try {
+            FileReader fileReader = new FileReader(file);
+            try (Scanner scanner = new Scanner(fileReader)) {
+                String tp = scanner.nextLine();
+                String te = scanner.nextLine();
+                int nf = Integer.valueOf(scanner.nextLine().split("=")[1]);
+                int nc = Integer.valueOf(scanner.nextLine().split("=")[1]);
+                int tr = Integer.valueOf(scanner.nextLine().split("=")[1]);
+                String np = scanner.nextLine();
+                int nr = Integer.valueOf(scanner.nextLine().split("=")[1]);
+
+                // Crear memoria
+
+                // memoriaVirtual: Llave = matriz:[fila-columna] - Valor = pagina
+                HashMap<String, Integer> memoriaVirtual = new HashMap<>();
+
+                for (int i = 0; i < nr; i++) {
+                    String linea = scanner.next();
+                    String[] lineaSplit = linea.split(",");
+                    memoriaVirtual.put(lineaSplit[0], Integer.parseInt(lineaSplit[1]));
+                }
+
+                // memoriaFisica: Llave = pagina - Valor = envejecimiento
+                memoriaFisica = new HashMap<Integer, Integer>();
+
+                // Iniciar el proceso de envejecimiento
+                Aging aging = new Aging(memoriaFisica, true);
+                aging.start();
+
+                // Recorrer memoria según el tipo de recorrido
+                int cantidadInterrupciones = -1;
+                if (tr == 1) {
+                    cantidadInterrupciones = recorrido1(memoriaVirtual, memoriaFisica, nf, nc, mp);
+
+                } else if (tr == 2) {
+                    cantidadInterrupciones = recorrido2(memoriaVirtual, memoriaFisica, nf, nc, mp);
+                } else {
+                    System.err.println("Tipo de recorrido no valido");
+                }
+
+                // Detener el proceso de envejecimiento
+                aging.isAlive = false;
+
+                // Imprimir resultados
+                imprimirLinea();
+                System.out.println("Cantidad de interrupciones: " + cantidadInterrupciones);
+                fileReader.close();
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                System.err.println("Error al leer/cerrar el archivo");
+                e.printStackTrace();
+            }
+
+        } catch (FileNotFoundException e) {
+            System.err.println("Algo salio mal");
+            e.printStackTrace();
+        }
+    }
+
+    private static int recorrido1(HashMap<String, Integer> memoriaVirtual, HashMap<Integer, Integer> memoriaFisica,
+            int nf, int nc, int mp) {
+
+                String[] letras = { "A:[", "B:[", "C:[" };
+                int fallos = 0;
+        for (int i = 0; i < nf; i++) {
+            for (int j = 0; j < nc; j++) {
+
+                for (int k = 0; k < 3; k++) {
+                    int pag = memoriaVirtual.get(letras[k] + i + "-" + j + "]");
+                    // System.out.println(letras[k] + i + "-" + j + "] = " + pag);
+                    synchronized (memoriaFisica) {
+                        boolean existe = memoriaFisica.containsKey(pag);
+                        if (existe) {
+                            int envejecimiento = memoriaFisica.get(pag);
+                            envejecimiento = envejecimiento | 0b10000000000000000000000000000000;
+                            memoriaFisica.put(pag, envejecimiento);
+                        } else {
+                            int envejecimiento = 0b10000000000000000000000000000000;
+                            if (memoriaFisica.size() <= mp) {
+                                memoriaFisica.put(pag, envejecimiento);
+                            } else {
+                                int aReemplazar = buscarReemplazo(memoriaFisica);
+                                memoriaFisica.remove(aReemplazar);
+                                memoriaFisica.put(pag, envejecimiento);
+                                fallos++;
+                            }
+                        }
+                    }
+
+                }
+
+                try {
+                    Thread.sleep(2);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return fallos;
+    }
+
+    private static int recorrido2(HashMap<String, Integer> memoriaVirtual, HashMap<Integer, Integer> memoriaFisica,
+            int nf, int nc, int mp) {
+
+                String[] letras = { "A:[", "B:[", "C:[" };
+        int fallos = 0;
+        for (int j = 0; j < nc; j++) {
+            for (int i = 0; i < nf; i++) {
+
+                for (int k = 0; k < 3; k++) {
+                    int pag = memoriaVirtual.get(letras[k] + i + "-" + j + "]");
+                    synchronized (memoriaFisica) {
+                        boolean existe = memoriaFisica.containsKey(pag);
+                        if (existe) {
+                            int envejecimiento = memoriaFisica.get(pag);
+                            envejecimiento = envejecimiento | 0b10000000000000000000000000000000;
+                            memoriaFisica.put(pag, envejecimiento);
+                        } else {
+                            int envejecimiento = 0b10000000000000000000000000000000;
+                            // System.out.println(memoriaFisica.size() + "-" + mp);
+                            if (memoriaFisica.size() < mp) {
+                                memoriaFisica.put(pag, envejecimiento);
+                            } else {
+                                int aReemplazar = buscarReemplazo(memoriaFisica);
+                                System.out.println("Reemplazando pagina " + aReemplazar + " por " + pag);
+                                memoriaFisica.remove(aReemplazar);
+                                memoriaFisica.put(pag, envejecimiento);
+                                fallos++;
+                            }
+                        }
+                    }
+                    // imprimirMemoria(memoriaFisica);
+                }
+
+                try {
+                    Thread.sleep(2);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return fallos;
+    }
+
+    private static void imprimirMemoria(HashMap<Integer, Integer> memoriaFisica) {
+        int i = 0;
+        imprimirLinea();
+        for (Entry<Integer, Integer> entry : memoriaFisica.entrySet()) {
+            System.out.println(i + "-" + entry.getKey() + " - " + Integer.toBinaryString(entry.getValue()));
+            i++;
+        }
+    }
+
+    private static int buscarReemplazo(HashMap<Integer, Integer> memoriaFisica) {
+        int aReemplazar = -1;
+        int min = Integer.MAX_VALUE;
+        for (int i : memoriaFisica.keySet()) {
+            int envejecimiento = memoriaFisica.get(i);
+            // System.out.println(Integer.toBinaryString(envejecimiento));
+            if (envejecimiento < min) {
+                min = envejecimiento;
+                aReemplazar = i;
+            }
+        }
+        return aReemplazar;
     }
 
     private static String generarArchivo(int tp, int te, int nf, int nc, int tr) {
-        String fecha = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy-HH-mm"));
+        String nombre = tp + "-" + te + "-" + nf + "x" + nc + "-" + tr + ".txt";
         String salida = "";
         int intPorPag = tp / te;
         int nr = nf * nc * 3; // Numero de referencias
-        int np = nr / intPorPag; // Numero de paginas = tamanio de 3 matrices / tamanio de pagina
+        int np = (int) Math.ceil(nr /(float) intPorPag); // Numero de paginas = tamanio de 3 matrices / tamanio de pagina
 
-        try (FileWriter archivo = new FileWriter(".\\data\\" + fecha + ".txt")) {
+        try (FileWriter archivo = new FileWriter(".\\data\\" + nombre)) {
             try {
                 // Escritura de los parametros
                 archivo.write("TP=" + tp + "\n"); // Tamanio de pagina
@@ -101,8 +273,12 @@ public class Caso2 {
                         } else if (matrizActual == 2) {
                             letra = "C";
                         }
-                        matrices[matrizActual][filaActual][columnaActual] = letra + ":[" + filaActual + ","
+                        try {
+                        matrices[matrizActual][filaActual][columnaActual] = letra + ":[" + filaActual + "-"
                                 + columnaActual + "]," + i + "," + j * te + "\n";
+                        } catch (ArrayIndexOutOfBoundsException e) {
+
+                        }
                         columnaActual++;
                         if (columnaActual == nc) {
                             columnaActual = 0;
@@ -110,6 +286,9 @@ public class Caso2 {
                             if (filaActual == nf) {
                                 filaActual = 0;
                                 matrizActual++;
+                                if (matrizActual == 3) {
+                                    break;
+                                }
                             }
                         }
                     }
@@ -123,11 +302,13 @@ public class Caso2 {
                     }
                 }
 
-                salida = "Archivo generado correctamente en: data/" + fecha + ".txt";
+                salida = "Archivo generado correctamente en: data/" + nombre;
 
             } catch (IOException e) {
                 salida = "Error al escribir en el archivo";
-            } finally {
+            } catch (Exception e) {
+                e.printStackTrace();
+            }finally {
                 archivo.close();
             }
         } catch (IOException e) {
@@ -144,7 +325,7 @@ public class Caso2 {
     }
 
     public static int intput(String text) {
-        System.out.print(text);
+        System.out.println(text);
         Scanner sc = new Scanner(System.in);
         return sc.nextInt();
     }
