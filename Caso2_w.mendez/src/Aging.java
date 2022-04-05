@@ -3,7 +3,6 @@ import java.util.HashMap;
 public class Aging extends Thread {
     private HashMap<Integer, Integer> memoriaFisica;
     protected boolean isAlive;
-    private Class<Caso2> main;
 
     public Aging(HashMap<Integer, Integer> memoriaFisica2, boolean isAlive) {
         this.memoriaFisica = memoriaFisica2;

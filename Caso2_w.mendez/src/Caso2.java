@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 
 public class Caso2 {
 
+
     private static HashMap<Integer, Integer> memoriaFisica;
 
     public static void main(String[] args) throws Exception {
@@ -23,7 +24,7 @@ public class Caso2 {
         System.out.println("Autores: w.mendez - jo.cabanzo");
         System.out.println("Caso 2 InfraComp - 2022-1");
         boolean salir = false;
-        while (!salir) {
+        while (!salir) { 
             imprimirLinea();
             imprimirMenu();
             String option = input("Seleccione una opcion: ");
@@ -49,7 +50,7 @@ public class Caso2 {
                     System.out.println("El archivo no existe");
                 }
 
-            } else if (option.equals("3")) {
+            } else if (option.equals("3")) { // Ejecutar opcion 3
                 imprimirLinea();
                 String nombre = input("Nombre del archivo en la carpeta data: ");
                 File file = new File("data/" + nombre);
@@ -71,189 +72,6 @@ public class Caso2 {
                 System.err.println("Opcion no valida");
             }
         }
-    }
-
-    private static void procesarArchivo(File file, int mp) {
-        try {
-            FileReader fileReader = new FileReader(file);
-            try (Scanner scanner = new Scanner(fileReader)) {
-                int tp = Integer.valueOf(scanner.nextLine().split("=")[1]);
-                int te = Integer.valueOf(scanner.nextLine().split("=")[1]);
-                int nf = Integer.valueOf(scanner.nextLine().split("=")[1]);
-                int nc = Integer.valueOf(scanner.nextLine().split("=")[1]);
-                int tr = Integer.valueOf(scanner.nextLine().split("=")[1]);
-                int np = Integer.valueOf(scanner.nextLine().split("=")[1]);
-                int nr = Integer.valueOf(scanner.nextLine().split("=")[1]);
-
-                // int totalBytes = nr * te;
-                // System.out.println("Total Bytes matrices: " + totalBytes);
-                // int intPorPag = tp / te;
-                // System.out.println("int por pagina: " + intPorPag);
-                // int totalBytesPag = intPorPag * te * mp;
-                // System.out.println("Total Bytes pagina: " + totalBytesPag);
-
-                // Crear memoria
-
-                // memoriaVirtual: Llave = matriz:[fila-columna] - Valor = pagina
-                HashMap<String, Integer> memoriaVirtual = new HashMap<>();
-
-                for (int i = 0; i < nr; i++) {
-                    String linea = scanner.next();
-                    String[] lineaSplit = linea.split(",");
-                    memoriaVirtual.put(lineaSplit[0], Integer.parseInt(lineaSplit[1]));
-                }
-
-                // memoriaFisica: Llave = pagina - Valor = envejecimiento
-                memoriaFisica = new HashMap<Integer, Integer>();
-
-                // Iniciar el proceso de envejecimiento
-                Aging aging = new Aging(memoriaFisica, true);
-                aging.start();
-
-                // Recorrer memoria según el tipo de recorrido
-                int cantidadInterrupciones = -1;
-                if (tr == 1) {
-                    cantidadInterrupciones = recorrido1(memoriaVirtual, memoriaFisica, nf, nc, mp);
-
-                } else if (tr == 2) {
-                    cantidadInterrupciones = recorrido2(memoriaVirtual, memoriaFisica, nf, nc, mp);
-                } else {
-                    System.err.println("Tipo de recorrido no valido");
-                }
-
-                // Detener el proceso de envejecimiento
-                aging.isAlive = false;
-
-                // Imprimir resultados
-                imprimirLinea();
-                System.out.println(
-                        "Cantidad de interrupciones: " + cantidadInterrupciones + " con " + mp + " marcos de pagina");
-                fileReader.close();
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                System.err.println("Error al leer/cerrar el archivo");
-                e.printStackTrace();
-            }
-
-        } catch (FileNotFoundException e) {
-            System.err.println("Algo salio mal");
-            e.printStackTrace();
-        }
-    }
-
-    private static int recorrido1(HashMap<String, Integer> memoriaVirtual, HashMap<Integer, Integer> memoriaFisica,
-            int nf, int nc, int mp) {
-
-        String[] letras = { "A:[", "B:[", "C:[" };
-        int fallos = 0;
-        for (int i = 0; i < nf; i++) {
-            for (int j = 0; j < nc; j++) {
-
-                for (int k = 0; k < 3; k++) {
-                    int pag = memoriaVirtual.get(letras[k] + i + "-" + j + "]");
-                    // System.out.println(letras[k] + i + "-" + j + "] = " + pag);
-                    synchronized (memoriaFisica) {
-                        boolean existe = memoriaFisica.containsKey(pag);
-                        if (existe) {
-                            int envejecimiento = memoriaFisica.get(pag);
-                            envejecimiento = envejecimiento | 0b10000000000000000000000000000000;
-                            memoriaFisica.put(pag, envejecimiento);
-                        } else {
-                            fallos++;
-                            int envejecimiento = 0b10000000000000000000000000000000;
-                            if (memoriaFisica.size() < mp) {
-                                System.out.println("Agregando pagina " + pag);
-                                memoriaFisica.put(pag, envejecimiento);
-                            } else {
-                                int aReemplazar = buscarReemplazo(memoriaFisica);
-                                System.out.println("Reemplazando pagina " + aReemplazar + " por " + pag);
-                                memoriaFisica.remove(aReemplazar);
-                                memoriaFisica.put(pag, envejecimiento);
-                            }
-                        }
-                    }
-                    imprimirMemoria(memoriaFisica);
-
-                }
-
-                try {
-                    Thread.sleep(2);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return fallos;
-    }
-
-    private static int recorrido2(HashMap<String, Integer> memoriaVirtual, HashMap<Integer, Integer> memoriaFisica,
-            int nf, int nc, int mp) {
-
-        String[] letras = { "A:[", "B:[", "C:[" };
-        int fallos = 0;
-        for (int j = 0; j < nc; j++) {
-            for (int i = 0; i < nf; i++) {
-
-                for (int k = 0; k < 3; k++) {
-                    int pag = memoriaVirtual.get(letras[k] + i + "-" + j + "]");
-                    synchronized (memoriaFisica) {
-                        boolean existe = memoriaFisica.containsKey(pag);
-                        if (existe) {
-                            int envejecimiento = memoriaFisica.get(pag);
-                            envejecimiento = envejecimiento | 0b10000000000000000000000000000000;
-                            memoriaFisica.put(pag, envejecimiento);
-                        } else {
-                            fallos++;
-                            int envejecimiento = 0b10000000000000000000000000000000;
-                            // System.out.println(memoriaFisica.size() + "-" + mp);
-                            if (memoriaFisica.size() < mp) {
-                                System.out.println("Agregando pagina " + pag);
-                                memoriaFisica.put(pag, envejecimiento);
-                            } else {
-                                int aReemplazar = buscarReemplazo(memoriaFisica);
-                                System.out.println("Reemplazando pagina " + aReemplazar + " por " + pag);
-                                memoriaFisica.remove(aReemplazar);
-                                memoriaFisica.put(pag, envejecimiento);
-                            }
-                        }
-                    }
-                    // imprimirMemoria(memoriaFisica);
-                }
-
-                try {
-                    Thread.sleep(2);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return fallos;
-    }
-
-    private static void imprimirMemoria(HashMap<Integer, Integer> memoriaFisica) {
-        int i = 0;
-        imprimirLinea();
-        for (Entry<Integer, Integer> entry : memoriaFisica.entrySet()) {
-            System.out.println(i + "-" + entry.getKey() + " - " + entry.getValue());
-            i++;
-        }
-    }
-
-    private static int buscarReemplazo(HashMap<Integer, Integer> memoriaFisica) {
-        int aReemplazar = -1;
-        int min = Integer.MAX_VALUE;
-        for (int i : memoriaFisica.keySet()) {
-            int envejecimiento = memoriaFisica.get(i);
-            // System.out.println(Integer.toBinaryString(envejecimiento));
-            if (envejecimiento < min) {
-                min = envejecimiento;
-                aReemplazar = i;
-            }
-        }
-        return aReemplazar;
     }
 
     private static String generarArchivo(int tp, int te, int nf, int nc, int tr) {
@@ -344,6 +162,180 @@ public class Caso2 {
         return salida;
     }
 
+    private static void procesarArchivo(File file, int mp) {
+        try {
+            FileReader fileReader = new FileReader(file);
+            try (Scanner scanner = new Scanner(fileReader)) {
+                int tp = Integer.valueOf(scanner.nextLine().split("=")[1]);
+                int te = Integer.valueOf(scanner.nextLine().split("=")[1]);
+                int nf = Integer.valueOf(scanner.nextLine().split("=")[1]);
+                int nc = Integer.valueOf(scanner.nextLine().split("=")[1]);
+                int tr = Integer.valueOf(scanner.nextLine().split("=")[1]);
+                int np = Integer.valueOf(scanner.nextLine().split("=")[1]);
+                int nr = Integer.valueOf(scanner.nextLine().split("=")[1]);
+
+                // int totalBytes = nr * te;
+                // System.out.println("Total Bytes matrices: " + totalBytes);
+                // int intPorPag = tp / te;
+                // System.out.println("int por pagina: " + intPorPag);
+                // int totalBytesPag = intPorPag * te * mp;
+                // System.out.println("Total Bytes pagina: " + totalBytesPag);
+
+                // Crear memoria
+
+                // memoriaVirtual: Llave = matriz:[fila-columna] - Valor = pagina
+                HashMap<String, Integer> memoriaVirtual = new HashMap<>();
+
+                for (int i = 0; i < nr; i++) {
+                    String linea = scanner.next();
+                    String[] lineaSplit = linea.split(",");
+                    memoriaVirtual.put(lineaSplit[0], Integer.parseInt(lineaSplit[1]));
+                }
+
+                // memoriaFisica: Llave = pagina - Valor = envejecimiento
+                memoriaFisica = new HashMap<Integer, Integer>();
+
+                // Iniciar el proceso de envejecimiento
+                Aging aging = new Aging(memoriaFisica, true);
+                aging.start();
+
+                // Recorrer memoria según el tipo de recorrido
+                int cantidadInterrupciones = -1;
+                if (tr == 1) {
+                    cantidadInterrupciones = recorrido1(memoriaVirtual, memoriaFisica, nf, nc, mp);
+
+                } else if (tr == 2) {
+                    cantidadInterrupciones = recorrido2(memoriaVirtual, memoriaFisica, nf, nc, mp);
+                } else {
+                    System.err.println("Tipo de recorrido no valido");
+                }
+
+                // Detener el proceso de envejecimiento
+                aging.isAlive = false;
+
+                // Imprimir resultados
+                imprimirLinea();
+                System.out.println(
+                        "Cantidad de interrupciones: " + cantidadInterrupciones + " con " + mp + " marcos de pagina");
+                fileReader.close();
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                System.err.println("Error al leer/cerrar el archivo");
+                e.printStackTrace();
+            }
+
+        } catch (FileNotFoundException e) {
+            System.err.println("Algo salio mal");
+            e.printStackTrace();
+        }
+    }
+
+    private static int recorrido1(HashMap<String, Integer> memoriaVirtual, HashMap<Integer, Integer> memoriaFisica,
+            int nf, int nc, int mp) {
+
+        String[] letras = { "A:[", "B:[", "C:[" };
+        int fallos = 0;
+        for (int i = 0; i < nf; i++) {
+            for (int j = 0; j < nc; j++) {
+
+                for (int k = 0; k < 3; k++) {
+                    int pag = memoriaVirtual.get(letras[k] + i + "-" + j + "]");
+                    // System.out.println(letras[k] + i + "-" + j + "] = " + pag);
+                    synchronized (memoriaFisica) {
+                        boolean existe = memoriaFisica.containsKey(pag);
+                        if (existe) {
+                            int envejecimiento = memoriaFisica.get(pag);
+                            envejecimiento = envejecimiento | 0b1000000000000000000000000000000;
+                            memoriaFisica.put(pag, envejecimiento);
+                        } else {
+                            fallos++;
+                            int envejecimiento = 0b1000000000000000000000000000000;
+                            if (memoriaFisica.size() < mp) {
+                                // System.out.println("Agregando pagina " + pag);
+                                memoriaFisica.put(pag, envejecimiento);
+                            } else {
+                                int aReemplazar = buscarReemplazo(memoriaFisica);
+                                // System.out.println("Reemplazando pagina " + aReemplazar + " por " + pag);
+                                memoriaFisica.remove(aReemplazar);
+                                memoriaFisica.put(pag, envejecimiento);
+                            }
+                        }
+                    }
+                    // imprimirMemoria(memoriaFisica);
+
+                }
+
+                try {
+                    Thread.sleep(2);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return fallos;
+    }
+
+    private static int recorrido2(HashMap<String, Integer> memoriaVirtual, HashMap<Integer, Integer> memoriaFisica,
+            int nf, int nc, int mp) {
+
+        String[] letras = { "A:[", "B:[", "C:[" };
+        int fallos = 0;
+        for (int j = 0; j < nc; j++) {
+            for (int i = 0; i < nf; i++) {
+
+                for (int k = 0; k < 3; k++) {
+                    int pag = memoriaVirtual.get(letras[k] + i + "-" + j + "]");
+                    synchronized (memoriaFisica) {
+                        boolean existe = memoriaFisica.containsKey(pag);
+                        if (existe) {
+                            int envejecimiento = memoriaFisica.get(pag);
+                            envejecimiento = envejecimiento | 0b1000000000000000000000000000000;
+                            memoriaFisica.put(pag, envejecimiento);
+                        } else {
+                            fallos++;
+                            int envejecimiento = 0b1000000000000000000000000000000;
+                            // System.out.println(memoriaFisica.size() + "-" + mp);
+                            if (memoriaFisica.size() < mp) {
+                                // System.out.println("Agregando pagina " + pag);
+                                memoriaFisica.put(pag, envejecimiento);
+                            } else {
+                                int aReemplazar = buscarReemplazo(memoriaFisica);
+                                // System.out.println("Reemplazando pagina " + aReemplazar + " por " + pag);
+                                memoriaFisica.remove(aReemplazar);
+                                memoriaFisica.put(pag, envejecimiento);
+                            }
+                        }
+                    }
+                    // imprimirMemoria(memoriaFisica);
+                }
+
+                try {
+                    Thread.sleep(2);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return fallos;
+    }
+
+    private static int buscarReemplazo(HashMap<Integer, Integer> memoriaFisica) {
+        int aReemplazar = -1;
+        int min = Integer.MAX_VALUE;
+        for (int i : memoriaFisica.keySet()) {
+            int envejecimiento = memoriaFisica.get(i);
+            // System.out.println(Integer.toBinaryString(envejecimiento));
+            if (envejecimiento < min) {
+                min = envejecimiento;
+                aReemplazar = i;
+            }
+        }
+        return aReemplazar;
+    }
+
     public static String input(String text) {
         System.out.println(text);
         Scanner sc = new Scanner(System.in);
@@ -354,6 +346,16 @@ public class Caso2 {
         System.out.println(text);
         Scanner sc = new Scanner(System.in);
         return sc.nextInt();
+    }
+
+    private static void imprimirMemoria(HashMap<Integer, Integer> memoriaFisica) {
+        int i = 0;
+        imprimirLinea();
+        for (Entry<Integer, Integer> entry : memoriaFisica.entrySet()) {
+            System.out.println(i + "-" + entry.getKey() + " - " + entry.getValue() + " - "
+                    + Integer.toBinaryString(entry.getValue()));
+            i++;
+        }
     }
 
     private static void imprimirMenu() {
