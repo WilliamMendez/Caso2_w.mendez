@@ -15,7 +15,6 @@ import java.util.Map.Entry;
 
 public class Caso2 {
 
-
     private static HashMap<Integer, Integer> memoriaFisica;
 
     public static void main(String[] args) throws Exception {
@@ -24,7 +23,7 @@ public class Caso2 {
         System.out.println("Autores: w.mendez - jo.cabanzo");
         System.out.println("Caso 2 InfraComp - 2022-1");
         boolean salir = false;
-        while (!salir) { 
+        while (!salir) {
             imprimirLinea();
             imprimirMenu();
             String option = input("Seleccione una opcion: ");
@@ -62,6 +61,22 @@ public class Caso2 {
                     }
                 } else {
                     System.out.println("El archivo no existe");
+                }
+            } else if (option.equals("4")) { // Ejecutar opcion 4
+                imprimirLinea();
+                System.out.println("Generando archivos de ejemplo...");
+                int[] tps = { 4, 8, 16, 32 };
+                int[] tes = { 1, 2, 4 };
+                int nf = 4;
+                int nc = 4;
+                int[] trs = { 1, 2 };
+
+                for (int tr : trs) {
+                    for (int te : tes) {
+                        for (int tp : tps) {
+                            System.out.println(generarArchivo(tp, te, nf, nc, tr));
+                        }
+                    }
                 }
             } else if (option.equals("0")) { // Ejecutar opcion 0
                 imprimirLinea();
@@ -138,11 +153,21 @@ public class Caso2 {
                     }
                 }
 
-                for (int i = 0; i < nf; i++) {
+                if (tr == 1) {
+                    for (int i = 0; i < nf; i++) {
+                        for (int j = 0; j < nc; j++) {
+                            archivo.write(matrices[0][i][j]);
+                            archivo.write(matrices[1][i][j]);
+                            archivo.write(matrices[2][i][j]);
+                        }
+                    }
+                } else if (tr == 2) {
                     for (int j = 0; j < nc; j++) {
-                        archivo.write(matrices[0][i][j]);
-                        archivo.write(matrices[1][i][j]);
-                        archivo.write(matrices[2][i][j]);
+                        for (int i = 0; i < nf; i++) {
+                            archivo.write(matrices[0][i][j]);
+                            archivo.write(matrices[1][i][j]);
+                            archivo.write(matrices[2][i][j]);
+                        }
                     }
                 }
 

@@ -16,7 +16,6 @@ public class Aging extends Thread {
                 for (Integer key : memoriaFisica.keySet()) {
                     // System.out.println(key + " - " + Integer.toBinaryString(memoriaFisica.get(key)));
                     memoriaFisica.replace(key, memoriaFisica.get(key) >>> 1);
-                    // memoriaFisica.put(key, memoriaFisica.get(key) >>> 1);
                     // System.out.println(key + " - " + Integer.toBinaryString(memoriaFisica.get(key)));
                 }
             }
