@@ -220,7 +220,8 @@ public class Caso2 {
             FileReader fileReader = new FileReader(file);
             try (Scanner scanner = new Scanner(fileReader)) {
                 for (int i = 0; i < 6; i++) {
-                    scanner.nextLine();
+                    // scanner.nextLine();
+                    System.out.println(scanner.nextLine());
                 }
                 int nr = Integer.valueOf(scanner.nextLine().split("=")[1]);
 
@@ -233,7 +234,7 @@ public class Caso2 {
                 aging.start();
 
                 // Recorrer archivo
-                int nFallos = 0;
+                int fallos = 0;
                 for (int i = 0; i < nr; i++) {
                     String linea = scanner.next();
                     String[] lineaSplit = linea.split(",");
@@ -247,14 +248,19 @@ public class Caso2 {
                             envejecimiento = envejecimiento | 0b1000000000000000000000000000000;
                             memoriaFisica.put(pag, envejecimiento);
                         } else {
-                            nFallos++;
+                            fallos++;
                             int envejecimiento = 0b1000000000000000000000000000000;
                             if (memoriaFisica.size() < mp) {
                                 // System.out.println("Agregando pagina " + pag);
                                 memoriaFisica.put(pag, envejecimiento);
                             } else {
                                 int aReemplazar = buscarReemplazo(memoriaFisica);
+
+                                // if (pag - aReemplazar != 1) {
+                                //     imprimirMemoria(memoriaFisica);
+                                // }
                                 // System.out.println("Reemplazando pagina " + aReemplazar + " por " + pag);
+
                                 memoriaFisica.remove(aReemplazar);
                                 memoriaFisica.put(pag, envejecimiento);
                             }
@@ -273,7 +279,7 @@ public class Caso2 {
 
                 // Imprimir resultados
                 System.out.println(
-                        "Cantidad de fallos: " + nFallos + " con " + mp + " marcos de pagina");
+                        "Cantidad de fallos: " + fallos + " con " + mp + " marcos de pagina");
                 fileReader.close();
             } catch (NumberFormatException e) {
                 e.printStackTrace();
