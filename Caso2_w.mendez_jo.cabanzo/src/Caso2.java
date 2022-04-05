@@ -49,6 +49,19 @@ public class Caso2 {
                     System.out.println("El archivo no existe");
                 }
 
+            } else if (option.equals("3")) {
+                imprimirLinea();
+                String nombre = input("Nombre del archivo en la carpeta data: ");
+                File file = new File("data/" + nombre);
+                if (file.exists()) {
+                    int[] tiempos = { 3, 6, 18, 36 };
+                    System.out.println("Ejecutando archivo...");
+                    for (int i = 0; i < tiempos.length; i++) {
+                        procesarArchivo(file, tiempos[i]);
+                    }
+                } else {
+                    System.out.println("El archivo no existe");
+                }
             } else if (option.equals("0")) { // Ejecutar opcion 0
                 imprimirLinea();
                 System.out.println("Saliendo...");
@@ -64,13 +77,20 @@ public class Caso2 {
         try {
             FileReader fileReader = new FileReader(file);
             try (Scanner scanner = new Scanner(fileReader)) {
-                String tp = scanner.nextLine();
-                String te = scanner.nextLine();
+                int tp = Integer.valueOf(scanner.nextLine().split("=")[1]);
+                int te = Integer.valueOf(scanner.nextLine().split("=")[1]);
                 int nf = Integer.valueOf(scanner.nextLine().split("=")[1]);
                 int nc = Integer.valueOf(scanner.nextLine().split("=")[1]);
                 int tr = Integer.valueOf(scanner.nextLine().split("=")[1]);
-                String np = scanner.nextLine();
+                int np = Integer.valueOf(scanner.nextLine().split("=")[1]);
                 int nr = Integer.valueOf(scanner.nextLine().split("=")[1]);
+
+                // int totalBytes = nr * te;
+                // System.out.println("Total Bytes matrices: " + totalBytes);
+                // int intPorPag = tp / te;
+                // System.out.println("int por pagina: " + intPorPag);
+                // int totalBytesPag = intPorPag * te * mp;
+                // System.out.println("Total Bytes pagina: " + totalBytesPag);
 
                 // Crear memoria
 
@@ -106,7 +126,8 @@ public class Caso2 {
 
                 // Imprimir resultados
                 imprimirLinea();
-                System.out.println("Cantidad de interrupciones: " + cantidadInterrupciones);
+                System.out.println(
+                        "Cantidad de interrupciones: " + cantidadInterrupciones + " con " + mp + " marcos de pagina");
                 fileReader.close();
             } catch (NumberFormatException e) {
                 e.printStackTrace();
@@ -124,8 +145,8 @@ public class Caso2 {
     private static int recorrido1(HashMap<String, Integer> memoriaVirtual, HashMap<Integer, Integer> memoriaFisica,
             int nf, int nc, int mp) {
 
-                String[] letras = { "A:[", "B:[", "C:[" };
-                int fallos = 0;
+        String[] letras = { "A:[", "B:[", "C:[" };
+        int fallos = 0;
         for (int i = 0; i < nf; i++) {
             for (int j = 0; j < nc; j++) {
 
@@ -141,15 +162,18 @@ public class Caso2 {
                         } else {
                             fallos++;
                             int envejecimiento = 0b10000000000000000000000000000000;
-                            if (memoriaFisica.size() <= mp) {
+                            if (memoriaFisica.size() < mp) {
+                                System.out.println("Agregando pagina " + pag);
                                 memoriaFisica.put(pag, envejecimiento);
                             } else {
                                 int aReemplazar = buscarReemplazo(memoriaFisica);
+                                System.out.println("Reemplazando pagina " + aReemplazar + " por " + pag);
                                 memoriaFisica.remove(aReemplazar);
                                 memoriaFisica.put(pag, envejecimiento);
                             }
                         }
                     }
+                    imprimirMemoria(memoriaFisica);
 
                 }
 
@@ -167,7 +191,7 @@ public class Caso2 {
     private static int recorrido2(HashMap<String, Integer> memoriaVirtual, HashMap<Integer, Integer> memoriaFisica,
             int nf, int nc, int mp) {
 
-                String[] letras = { "A:[", "B:[", "C:[" };
+        String[] letras = { "A:[", "B:[", "C:[" };
         int fallos = 0;
         for (int j = 0; j < nc; j++) {
             for (int i = 0; i < nf; i++) {
@@ -185,6 +209,7 @@ public class Caso2 {
                             int envejecimiento = 0b10000000000000000000000000000000;
                             // System.out.println(memoriaFisica.size() + "-" + mp);
                             if (memoriaFisica.size() < mp) {
+                                System.out.println("Agregando pagina " + pag);
                                 memoriaFisica.put(pag, envejecimiento);
                             } else {
                                 int aReemplazar = buscarReemplazo(memoriaFisica);
@@ -212,7 +237,7 @@ public class Caso2 {
         int i = 0;
         imprimirLinea();
         for (Entry<Integer, Integer> entry : memoriaFisica.entrySet()) {
-            System.out.println(i + "-" + entry.getKey() + " - " + Integer.toBinaryString(entry.getValue()));
+            System.out.println(i + "-" + entry.getKey() + " - " + entry.getValue());
             i++;
         }
     }
@@ -236,7 +261,8 @@ public class Caso2 {
         String salida = "";
         int intPorPag = tp / te;
         int nr = nf * nc * 3; // Numero de referencias
-        int np = (int) Math.ceil(nr /(float) intPorPag); // Numero de paginas = tamanio de 3 matrices / tamanio de pagina
+        int np = (int) Math.ceil(nr / (float) intPorPag); // Numero de paginas = tamanio de 3 matrices / tamanio de
+                                                          // pagina
 
         try (FileWriter archivo = new FileWriter(".\\data\\" + nombre)) {
             try {
@@ -274,8 +300,8 @@ public class Caso2 {
                             letra = "C";
                         }
                         try {
-                        matrices[matrizActual][filaActual][columnaActual] = letra + ":[" + filaActual + "-"
-                                + columnaActual + "]," + i + "," + j * te + "\n";
+                            matrices[matrizActual][filaActual][columnaActual] = letra + ":[" + filaActual + "-"
+                                    + columnaActual + "]," + i + "," + j * te + "\n";
                         } catch (ArrayIndexOutOfBoundsException e) {
 
                         }
@@ -308,7 +334,7 @@ public class Caso2 {
                 salida = "Error al escribir en el archivo";
             } catch (Exception e) {
                 e.printStackTrace();
-            }finally {
+            } finally {
                 archivo.close();
             }
         } catch (IOException e) {
@@ -333,6 +359,7 @@ public class Caso2 {
     private static void imprimirMenu() {
         System.out.println("1) Generar Archivo");
         System.out.println("2) Simular ejecucion");
+        System.out.println("3) Simulación grande");
         System.out.println("0) Salir");
     }
 
